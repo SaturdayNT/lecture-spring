@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 이 XML의 구조대로 구현될 클래스의 이름 -->
+<mapper namespace="BbsFileMapper">
+
+	<!-- Beans 클래스의 객체이름(id)과 클래스이름(type)을 명시한다. -->
+	<resultMap id="bbs_file" type="study.spring.mysite.model.BbsFile">
+		<!-- Beans의 멤버변수(property)이름과 대상 테이블의 컬럼(column)을 연결한다. -->
+		<result property="id" column="id" />
+		<result property="originName" column="origin_name" />
+		<result property="fileDir" column="file_dir" />
+		<result property="fileName" column="file_name" />
+		<result property="contentType" column="content_type" />
+		<result property="fileSize" column="file_size" />
+		<result property="regDate" column="reg_date" />
+		<result property="editDate" column="edit_date" />
+		<result property="bbsDocumentId" column="bbs_document_id" />
+	</resultMap>
+	
+	<!-- 게시글에 속한 첨부파일의 정보를 저장한다. -->
+	<insert id="insertFile" parameterType="study.spring.mysite.model.BbsFile"
+		useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO bbs_file(
+			origin_name, file_dir, file_name, content_type,
+			file_size, reg_date, edit_date, bbs_document_id 
+		) VALUES (
+			#{originName}, #{fileDir}, #{fileName}, #{contentType},
+			#{fileSize}, now(), now(), #{bbsDocumentId}
+		)
+	</insert>
+	
+	<!-- 하나의 게시물에 속한 파일목록을 조회한다. -->
+	<select id="selectFileList" parameterType="study.spring.mysite.model.BbsFile" 
+		resultMap="bbs_file">
+		SELECT id, origin_name, file_dir, file_name, content_type,
+			   file_size, reg_date, edit_date, bbs_document_id
+		FROM   bbs_file
+		WHERE  bbs_document_id=#{bbsDocumentId}
+	</select>
+	
+	<!-- 게시글에 속한 파일 전체 삭제 하기 -->
+	<delete id="deleteFileAll" parameterType="study.spring.mysite.model.BbsFile">
+		DELETE FROM bbs_file WHERE bbs_document_id=#{bbsDocumentId}
+	</delete>
+	
+	<!-- 하나의 파일을 조회한다. -->
+	<select id="selectFile" parameterType="study.spring.mysite.model.BbsFile" 
+		resultMap="bbs_file">
+		SELECT file_dir, file_name FROM bbs_file WHERE id=#{id}
+	</select>
+	
+	<!-- 하나의 파일을 삭제한다. -->
+	<delete id="deleteFile" parameterType="study.spring.mysite.model.BbsFile">
+		DELETE FROM bbs_file WHERE id=#{id}
+	</delete>
+	
+</mapper>
+

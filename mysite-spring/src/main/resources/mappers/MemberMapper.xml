@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 이 XML의 구조대로 구현될 클래스의 이름 => Impl클래스를 대체한다. -->
+<mapper namespace="MemberMapper">
+
+	<!-- Beans 클래스의 객체이름(id)과 클래스이름(type)을 명시한다. -->
+	<resultMap id="member" type="study.spring.mysite.model.Member">
+		<!-- Beans의 멤버변수(property)이름과 대상 테이블의 컬럼(column)을 연결한다. -->
+		<result property="id" column="id" />
+		<result property="name" column="name" />
+		<result property="userId" column="user_id" />
+		<result property="userPw" column="user_pw" />
+		<result property="email" column="email" />
+		<result property="gender" column="gender" />
+		<result property="birthdate" column="birthdate" />
+		<result property="tel" column="tel" />
+		<result property="postcode" column="postcode" />
+		<result property="addr1" column="addr1" />
+		<result property="addr2" column="addr2" />
+		<result property="profileImg" column="profile_img" />
+		<result property="regDate" column="reg_date" />
+		<result property="editDate" column="edit_date" />
+	</resultMap>
+	
+	<!-- 아이디 중복검사를 수행한다 -->
+    <select id="selectUserIdCount" parameterType="study.spring.mysite.model.Member" resultType="int">
+        SELECT count(id) FROM member WHERE user_id=#{userId}
+    </select>
+     
+    <!-- 이메일 중복검사를 수행한다 -->
+    <select id="selectEmailCount" parameterType="study.spring.mysite.model.Member" resultType="int">
+        SELECT count(id) FROM member WHERE email=#{email}
+    </select>
+    
+    <!-- 회원정보를 저장한다 : 가입 -->
+	<insert id="insertMember" parameterType="study.spring.mysite.model.Member" 
+		useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO member (
+			name, user_id, user_pw, 
+			email, gender, birthdate, tel, 
+			postcode, addr1, addr2,
+        	profile_img, reg_date, edit_date
+		) VALUES (
+			#{name}, #{userId}, password(#{userPw}),
+			#{email}, #{gender}, #{birthdate}, #{tel}, 
+			#{postcode}, #{addr1}, #{addr2},
+        	#{profileImg}, now(), now()
+		)
+	</insert>
+	
+	<!-- 아이디와 비밀번호가 일치하는 회원정보를 조회한다. -->
+    <select id="selectLoginInfo" parameterType="study.spring.mysite.model.Member" resultMap="member">
+        SELECT
+        	id, name, user_id, user_pw, email, gender,
+        	DATE_FORMAT(birthdate, '%Y-%m-%d') AS birthdate,
+        	tel, postcode, addr1, addr2, profile_img, reg_date, edit_date
+        FROM member
+        WHERE user_id=#{userId} AND user_pw=password(#{userPw})
+        ORDER BY id DESC
+        LIMIT 0, 1
+    </select>
+    
+    <!-- 비밀번호 재발급: 이메일주소가 일치하는 비밀번호를 변경한다. -->
+	<update id="updateMemberPasswordByEmail" parameterType="study.spring.mysite.model.Member">
+		UPDATE member SET user_pw=password(#{userPw}), edit_date=now()
+		WHERE email=#{email};
+	</update>
+	
+	<!-- 현재 로그인 중인 회원의 비밀번호를 검사한다. -->
+    <select id="selectMemberPasswordCount" parameterType="study.spring.mysite.model.Member" 
+    	resultType="int">
+        SELECT count(id) FROM member 
+        WHERE id=#{id} AND user_pw=password(#{userPw})
+    </select>
+	
+	<!-- 회원정보를 삭제한다 : 탈퇴 -->
+	<delete id="deleteMember" parameterType="study.spring.mysite.model.Member">
+		DELETE FROM member WHERE id=#{id};
+	</delete>
+	
+	<!-- 회원정보를 변경한다 -->
+	<update id="updateMember" parameterType="study.spring.mysite.model.Member">
+		UPDATE member SET
+			name=#{name}, email=#{email}, gender=#{gender}, birthdate=#{birthdate},
+			tel=#{tel}, postcode=#{postcode}, addr1=#{addr1}, addr2=#{addr2},
+			edit_date=now()
+			
+			<if test="newUserPw != null and newUserPw != ''">
+				, user_pw=password(#{newUserPw})
+			</if>
+			
+			<choose>
+				<when test="profileImg == ''">
+					, profile_img=null
+				</when>
+				<when test="profileImg != null">
+					, profile_img=#{profileImg}
+				</when>
+			</choose>
+		
+		WHERE id=#{id}
+	</update>
+	
+	<!-- 일련번호에 의한 회원정보 조회 -->
+    <select id="selectMember" parameterType="study.spring.mysite.model.Member" 
+    	resultMap="member">
+        SELECT
+        	id, name, user_id, user_pw, email, gender,
+        	DATE_FORMAT(birthdate, '%Y-%m-%d') AS birthdate,
+        	tel, postcode, addr1, addr2, profile_img, reg_date, edit_date
+        FROM member
+        WHERE id=#{id}
+    </select>
+
+</mapper>

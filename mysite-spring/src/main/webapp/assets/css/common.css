@@ -1,0 +1,19 @@
+/** 페이지 기본 높이 */
+html, body {
+	height: 100%;
+}
+
+/** body 영역이 메뉴에 가려지는 부분 확보하기 */
+body {
+	padding-top: 50px;
+}
+
+/** 반응형 메뉴 영역의 높이 제한 해제 */
+.navbar-fixed-top .navbar-collapse {
+	max-height: 100%;
+}
+
+/** 하단 영역 */
+#footer {
+	margin-bottom: 50px;
+}

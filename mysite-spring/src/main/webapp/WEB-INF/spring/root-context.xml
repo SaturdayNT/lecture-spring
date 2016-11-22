@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:cache="http://www.springframework.org/schema/cache"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xsi:schemaLocation="http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-4.3.xsd
+		http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache-4.3.xsd
+		http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd">
+	
+	<!-- Root Context: defines shared resources visible to all other web components -->
+	<!-- 메일발송 라이브러리 객체주입 -->
+	<bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		<property name="host" value="smtp.gmail.com" />
+		<property name="port" value="465" />
+		<property name="username" value="자신의 Gmail 주소" />
+		<property name="password" value="자신의 Gmail 비밀번호" />
+		<property name="defaultEncoding" value="UTF-8" />
+		<property name="javaMailProperties">
+			<props>
+				<prop key="mail.smtp.starttls.enable">true</prop>
+				<prop key="mail.smtp.auth">true</prop>
+				<prop key="mail.smtp.debug">true</prop>
+				<prop key="mail.smtp.socketFactory.port">465</prop>
+				<prop key="mail.smtp.socketFactory.class">javax.net.ssl.SSLSocketFactory</prop>
+				<prop key="mail.smtp.socketFactory.fallback">false</prop>
+			</props>
+		</property>
+	</bean>
+
+	<!--helper 패키지 객체 주입 -->
+	<bean id="web" class="study.spring.helper.WebHelper" scope="singleton" />
+	<bean id="upload" class="study.spring.helper.UploadHelper" scope="singleton">
+		<constructor-arg value="자신의 workspace 경로" />
+	</bean>
+	<bean id="mail" class="study.spring.helper.MailHelper" scope="singleton">
+		<constructor-arg ref="mailSender" />
+	</bean>
+	<bean id="page" class="study.spring.helper.PageHelper" scope="singleton" />
+	<bean id="regex" class="study.spring.helper.RegexHelper" scope="singleton" />
+	<bean id="util" class="study.spring.helper.Util" scope="singleton" />
+
+	<!-- MySQL 연결 설정 -->
+	<bean id="dataSource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<!--
+		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+		<property name="url" value="jdbc:mysql://localhost:3306/myschool?characterEncoding=UTF8" />
+		-->
+		<property name="driverClassName" value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy"/>
+	    <property name="url" 
+	     value="jdbc:log4jdbc:mysql://localhost:3306/mysite?characterEncoding=UTF8"/>
+		<property name="username" value="root" />
+		<property name="password" value="root" />
+	</bean>
+
+	<!-- MyBatis SqlSessionFactory 객체 설정 : config.xml의 역할 수행 -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<!-- DB접속 정보를 미리 정의해둔 MySQL JDBC의 dataSource로 처리한다. -->
+		<property name="dataSource" ref="dataSource" />
+		<!-- Mapper의 경로를 설정한다. -->
+		<property name="mapperLocations" value="classpath:/mappers/**/*Mapper.xml" />
+	</bean>
+
+	<!-- sqlSession 객체 생성 -->
+	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate" 
+		destroy-method="clearCache">
+		<constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory" />
+	</bean>
+	
+	<!-- 싱글톤 객체의 생성 -->
+	<bean id="bbsCommon" class="study.spring.mysite.controller.bbs.BBSCommon"
+		scope="singleton" />
+</beans>
+
+
+
+
+
+
+
+
+
+

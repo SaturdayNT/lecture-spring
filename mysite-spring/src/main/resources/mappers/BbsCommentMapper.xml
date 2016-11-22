@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 이 XML의 구조대로 구현될 클래스의 이름 => Impl클래스를 대체한다. -->
+<mapper namespace="BbsCommentMapper">
+
+	<!-- Beans 클래스의 객체이름(id)과 클래스이름(type)을 명시한다. -->
+	<resultMap id="bbs_comment" type="study.spring.mysite.model.BbsComment">
+		<!-- Beans의 멤버변수(property)이름과 대상 테이블의 컬럼(column)을 연결한다. -->
+		<result property="id" column="id" />
+		<result property="writerName" column="writer_name" />
+		<result property="writerPw" column="writer_pw" />
+		<result property="email" column="email" />
+		<result property="content" column="content" />
+		<result property="regDate" column="reg_date" />
+		<result property="editDate" column="edit_date" />
+		<result property="ipAddress" column="ip_address" />
+		<result property="memberId" column="member_id" />
+		<result property="bbsDocumentId" column="bbs_document_id" />
+	</resultMap>
+	
+	<!-- 덧글 정보 저장하기 -->
+	<insert id="insertComment" parameterType="study.spring.mysite.model.BbsComment" 
+		useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO bbs_comment (
+			writer_name, email, content, reg_date, edit_date, ip_address, bbs_document_id, 
+			member_id, writer_pw
+		) VALUES (
+			#{writerName}, #{email}, #{content}, now(), now(), #{ipAddress}, #{bbsDocumentId}, 
+			
+			<choose>
+				<when test="memberId == 0">
+					null, password(#{writerPw})
+				</when>
+				<otherwise>
+					#{memberId}, #{writerPw}
+				</otherwise>
+			</choose>
+		)
+	</insert>
+	
+	<!-- 덧글 하나에 대한 정보를 조회한다. -->
+	<select id="selectComment" parameterType="study.spring.mysite.model.BbsComment" 
+		resultMap="bbs_comment">
+		SELECT id, writer_name, email, content, 
+			   DATE_FORMAT(reg_date, '%Y-%m-%d %H:%i:%s') as reg_date, 
+			   DATE_FORMAT(edit_date, '%Y-%m-%d %H:%i:%s') as edit_date, 
+			   ip_address, member_id, bbs_document_id
+		FROM   bbs_comment
+		WHERE  id=#{id}
+	</select>
+	
+	<!-- 하나의 게시물에 속한 모든 덧글 목록을 조회한다. -->
+	<select id="selectCommentList" parameterType="study.spring.mysite.model.BbsComment" 
+		resultMap="bbs_comment">
+		SELECT   id, writer_name, email, content, 
+			     DATE_FORMAT(reg_date, '%Y-%m-%d %H:%i:%s') as reg_date, 
+			     DATE_FORMAT(edit_date, '%Y-%m-%d %H:%i:%s') as edit_date, 
+			     ip_address, member_id, bbs_document_id
+		FROM     bbs_comment
+		WHERE    bbs_document_id=#{bbsDocumentId}
+		ORDER BY id ASC
+	</select>
+	
+	<!-- 자신의 덧글인지 검사한다 -->
+	<select id="selectCommentCountByMemberId"
+		parameterType="study.spring.mysite.model.BbsComment"
+		resultType="int">
+		SELECT COUNT(id) FROM bbs_comment
+		WHERE id=#{id} AND member_id=#{memberId}
+	</select>
+	
+	<!-- 비밀번호를 검사한다. -->
+	<select id="selectCommentCountByPw"
+		parameterType="study.spring.mysite.model.BbsComment"
+		resultType="int">
+		SELECT COUNT(id) FROM bbs_comment
+		WHERE id=#{id} AND writer_pw=password(#{writerPw})
+	</select>
+	
+	<!-- 덧글 삭제 하기 -->
+	<delete id="deleteComment" parameterType="study.spring.mysite.model.BbsComment">
+		DELETE FROM bbs_comment WHERE id=#{id}
+	</delete>
+	
+	<!-- 덧글 정보 수정하기 -->
+	<update id="updateComment" parameterType="study.spring.mysite.model.BbsComment">
+		UPDATE bbs_comment SET
+			writer_name=#{writerName},
+			email=#{email},
+			content=#{content},
+			ip_address=#{ipAddress},
+			edit_date=now()
+		WHERE id=#{id}
+	</update>
+	
+	<!-- 특정 게시물에 속한 모든 덧글을 삭제한다. -->
+	<delete id="deleteCommentAll" parameterType="study.spring.mysite.model.BbsComment">
+		DELETE FROM bbs_comment WHERE bbs_document_id=#{bbsDocumentId}
+	</delete>
+	
+	<!-- 특정 회원과의 게시물 참조 해제하기 -->
+	<update id="updateCommentMemberOut" parameterType="study.spring.mysite.model.BbsComment">
+		UPDATE bbs_comment
+		SET    member_id=NULL, edit_date=now()
+		WHERE  member_id=#{memberId}
+	</update>
+
+</mapper>
+
